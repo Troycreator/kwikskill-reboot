@@ -1,0 +1,23 @@
+# Node modules
+node_modules/
+.cache/
+
+# Cache files
+**/.cache/
+
+# Python virtual environment
+venv/
+__pycache__/
+
+# Firebase admin SDK secret file
+kwikskill-backend/app/firebase-admin-sdk.json
+
+# Database files
+*.db
+
+# Logs
+*.log
+
+# Misc
+.DS_Store
+.env
