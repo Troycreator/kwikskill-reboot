@@ -5,35 +5,11 @@ const Signup = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-100 to-indigo-300">
       <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Create a new account
+        <h2 className="text-3xl font-bold text-center text-gray-900">
+          Create your account
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Or{" "}
-          <Link
-            to="/login"
-            className="font-medium text-indigo-600 hover:text-indigo-500"
-          >
-            sign in to your existing account
-          </Link>
-        </p>
-        <form className="space-y-6 mt-8">
-          <div>
-            <label
-              htmlFor="fullname"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Full Name
-            </label>
-            <input
-              id="fullname"
-              name="fullname"
-              type="text"
-              required
-              className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md sm:text-sm"
-            />
-          </div>
 
+        <form className="space-y-6 mt-8">
           <div>
             <label
               htmlFor="email"
@@ -46,23 +22,7 @@ const Signup = () => {
               name="email"
               type="email"
               required
-              className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md sm:text-sm"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="phone"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Phone
-            </label>
-            <input
-              id="phone"
-              name="phone"
-              type="tel"
-              required
-              className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md sm:text-sm"
+              className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-400 focus:outline-none"
             />
           </div>
 
@@ -78,49 +38,42 @@ const Signup = () => {
               name="password"
               type="password"
               required
-              className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md sm:text-sm"
+              className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-400 focus:outline-none"
             />
           </div>
-
-          <div>
-            <label
-              htmlFor="confirm-password"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Confirm Password
-            </label>
-            <input
-              id="confirm-password"
-              name="confirm-password"
-              type="password"
-              required
-              className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md sm:text-sm"
-            />
-          </div>
-
-          <label className="flex items-center text-sm text-gray-900">
-            <input
-              id="terms"
-              name="terms"
-              type="checkbox"
-              className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
-              required
-            />
-            <span className="ml-2">
-              I agree to the{" "}
-              <a href="#" className="text-indigo-600 hover:text-indigo-500">
-                Terms and Conditions
-              </a>
-            </span>
-          </label>
 
           <button
             type="submit"
-            className="w-full py-2 px-4 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 sm:text-sm"
+            className="w-full py-2 px-4 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 transition-colors"
           >
             Create Account
           </button>
         </form>
+
+        <div className="my-6 flex items-center">
+          <div className="flex-grow h-px bg-gray-200" />
+          <span className="mx-4 text-gray-400 text-sm">or continue with</span>
+          <div className="flex-grow h-px bg-gray-200" />
+        </div>
+
+        <button
+          type="button"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+        >
+          <img
+            src="https://www.svgrepo.com/show/475656/google-color.svg"
+            alt="Google"
+            className="w-5 h-5"
+          />
+          <span className="text-gray-700">Google</span>
+        </button>
+
+        <p className="mt-6 text-center text-sm text-gray-600">
+          Already have an account?{" "}
+          <Link to="/login" className="text-indigo-600 hover:text-indigo-500 font-medium">
+            Log in
+          </Link>
+        </p>
       </div>
     </div>
   );

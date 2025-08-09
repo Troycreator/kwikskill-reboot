@@ -1,0 +1,12 @@
+# Node.js (frontend)
+kwikskill-frontend/node_modules/
+kwikskill-frontend/build/
+
+# Python (backend)
+kwikskill-backend/__pycache__/
+kwikskill-backend/venv/
+kwikskill-backend/*.pyc
+**/__pycache__/
+
+# General
+*.env
