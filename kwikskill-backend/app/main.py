@@ -1,63 +1,71 @@
 # main.py
 import os
-from fastapi import FastAPI, Request, HTTPException, Depends
+import logging
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
-from app import models, database
-from app.routers.services import router as services_router
-from app.dependencies import get_current_user
-from app.database import SessionLocal, engine
-from firebase_admin import credentials, initialize_app, auth
-from pydantic import BaseModel
+from app import models
+from app.database import engine
+from app.routers import users, auth, services
+from app.firebase_admin import initialize_firebase_admin
 
-# Firebase Init
-cred = credentials.Certificate("app/firebase-admin-sdk.json")
-initialize_app(cred)
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Initialize Firebase Admin before creating FastAPI app
+initialize_firebase_admin()
 
 # Create tables
 models.Base.metadata.create_all(bind=engine)
 
 # App Init
-app = FastAPI()
+app = FastAPI(
+    title="KwikSkill API",
+    description="Backend API for KwikSkill platform",
+    version="1.0.0"
+)
 
+# Request logging middleware
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logger.info(f"Incoming {request.method} request to {request.url.path}")
+    response = await call_next(request)
+    logger.info(f"Returning {response.status_code} response")
+    return response
+
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173"],  # Vite dev server
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
-# DB Dependency
+# Include routers - Remove prefix since it's defined in the routers themselves
+app.include_router(auth.router)  # Auth router already has prefix="/auth"
+app.include_router(users.router) # Users router already has prefix="/users"
+app.include_router(services.router)
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# Base route for API health check
+@app.get("/", tags=["Root"])
+async def read_root():
+    """Root endpoint to check if API is running"""
+    logger.info("Root endpoint accessed")
+    return {
+        "message": "KwikSkill Backend Running",
+        "version": "1.0.0",
+        "status": "healthy"
+    }
 
-
-
-# Pydantic
-class Skill(BaseModel):
-    name: str
-
-# Routes
-@app.get("/")
-def read_root():
-    return {"message": "KwikSkill Backend Running"}
-
-@app.get("/protected")
-def protected_route(user=Depends(get_current_user)):
-    return {"message": "You are authenticated!", "uid": user["uid"]}
-
-@app.post("/skills")
-def create_skill(skill: Skill, db: Session = Depends(get_db)):
-    new_skill = models.Skill(name=skill.name, user_id="test-user-id")
-    db.add(new_skill)
-    db.commit()
-    db.refresh(new_skill)
-    return new_skill
-
-app.include_router(services_router)
+# Global error handler
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    error_msg = str(exc)
+    logger.error(f"Global exception: {error_msg}")
+    return {
+        "detail": error_msg,
+        "path": request.url.path,
+        "method": request.method
+    }

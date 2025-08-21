@@ -1,54 +1,82 @@
 # app/services.py
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app import crud_service, schemas, database, models
-from app.dependencies import get_current_user
+from typing import List
+from app import models, schemas
+from app.database import get_db
+from app.routers.auth import verify_token
+from app.crud import service as crud_service
 
-router = APIRouter(prefix="/services", tags=["Services"])
-
-def get_db():
-    db = database.SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+router = APIRouter(
+    prefix="/services",
+    tags=["Services"]
+)
 
 @router.post("/", response_model=schemas.Service)
-def create(service: schemas.ServiceCreate, db: Session = Depends(get_db), user=Depends(get_current_user)):
-    # Try to get the DB user by Firebase UID
-    db_user = crud_service.get_user_by_firebase_uid(db, user["uid"])
-    if not db_user:
-        # Create a new user in DB if not found
-        new_user = models.User(firebase_uid=user["uid"])
-        db.add(new_user)
-        db.commit()
-        db.refresh(new_user)
-        db_user = new_user
+async def create_service(
+    service: schemas.ServiceCreate,
+    current_user: models.User = Depends(verify_token),
+    db: Session = Depends(get_db)
+):
+    """Create a new service"""
+    return crud_service.create_service(db, service, current_user.id)
 
-    return crud_service.create_service(db, service, db_user.id)
+@router.get("/provider", response_model=List[schemas.Service])
+async def get_provider_services(
+    current_user: models.User = Depends(verify_token),
+    db: Session = Depends(get_db)
+):
+    """Get services for current provider"""
+    services = db.query(models.Service).filter(
+        models.Service.provider_id == current_user.id
+    ).all()
+    return services
 
-@router.get("/", response_model=list[schemas.Service])
-def read_all(db: Session = Depends(get_db)):
+@router.get("/", response_model=List[schemas.Service])
+async def list_services(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(verify_token)
+):
+    """List all services"""
     return crud_service.get_services(db)
 
 @router.get("/{service_id}", response_model=schemas.Service)
 def read(service_id: int, db: Session = Depends(get_db)):
+    """Get a single service by ID"""
     service = crud_service.get_service(db, service_id)
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
     return service
 
 @router.put("/{service_id}", response_model=schemas.Service)
-def update(service_id: int, updated: schemas.ServiceCreate, db: Session = Depends(get_db)):
-    service = crud_service.update_service(db, service_id, updated)
-    if not service:
+def update(
+    service_id: int, 
+    service: schemas.ServiceCreate, 
+    current_user: models.User = Depends(verify_token),
+    db: Session = Depends(get_db)
+):
+    """Update a service"""
+    db_service = crud_service.get_service(db, service_id)
+    if not db_service:
         raise HTTPException(status_code=404, detail="Service not found")
-    return service
+    if db_service.provider_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to update this service")
+    
+    return crud_service.update_service(db, service_id, service)
 
 @router.delete("/{service_id}")
-def delete(service_id: int, db: Session = Depends(get_db)):
-    service = crud_service.delete_service(db, service_id)
-    if not service:
+def delete(
+    service_id: int, 
+    current_user: models.User = Depends(verify_token),
+    db: Session = Depends(get_db)
+):
+    """Delete a service"""
+    db_service = crud_service.get_service(db, service_id)
+    if not db_service:
         raise HTTPException(status_code=404, detail="Service not found")
+    if db_service.provider_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this service")
+    
+    crud_service.delete_service(db, service_id)
     return {"detail": "Service deleted"}

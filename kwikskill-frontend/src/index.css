@@ -62,3 +62,11 @@ body {
   opacity: 0;
   cursor: pointer;
 }
+.service-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.star-rating {
+    color: #f59e0b;
+}
